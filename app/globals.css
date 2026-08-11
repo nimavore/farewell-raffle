@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink text-slate-100 antialiased;
+  background-image: radial-gradient(
+      1200px 600px at 50% -10%,
+      rgba(124, 92, 255, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(900px 500px at 100% 0%, rgba(255, 207, 92, 0.08), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Utility for the big-screen wheel: prevent text selection while holding to charge */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
