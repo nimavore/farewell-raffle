@@ -159,14 +159,15 @@ export default function WheelPage() {
   }
 
   if (!data.ready) {
-    return <Screen>Loading…</Screen>;
+    return <Screen>Warming up the engine… ∿</Screen>;
   }
   if (!locked) {
     return (
       <Screen>
-        <p className="text-2xl font-semibold">Waiting for the draw to start…</p>
+        <p className="text-2xl font-semibold">Still in the pit lane… 🏁</p>
         <p className="mt-2 text-slate-400">
-          The wheel opens once registration is locked.
+          The wheel fires up the moment the mystery host says go. Grab a draft
+          beer in the meantime. 🍺
         </p>
       </Screen>
     );
@@ -178,9 +179,9 @@ export default function WheelPage() {
   return (
     <main className="no-select mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 py-8">
       <div className="mb-4 flex w-full items-center justify-between text-sm text-slate-400">
-        <span>Farewell Raffle 🎡</span>
+        <span>Mbition · Farewell Raffle ∿</span>
         <span>
-          {spunCount} of {total} spun
+          {spunCount} of {total} across the line
         </span>
       </div>
 
@@ -221,7 +222,7 @@ export default function WheelPage() {
           )}
 
           {phase === "spinning" && (
-            <p className="mt-6 h-14 text-lg text-slate-400">Spinning…</p>
+            <p className="mt-6 h-14 text-lg text-slate-400">Full throttle… 🏎️💨</p>
           )}
 
           {phase === "result" && result && (
@@ -254,9 +255,9 @@ function Picker({
 }) {
   return (
     <div className="mt-6 w-full max-w-xl">
-      <h1 className="text-center text-3xl font-bold">Pick your name</h1>
+      <h1 className="text-center text-3xl font-bold">Who&apos;s up next? 🏎️</h1>
       <p className="mt-1 text-center text-slate-400">
-        Then hold the button to charge your spin.
+        Find your name, then hold the button to rev the wheel.
       </p>
       <div className="mt-6 grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
         {registrants.map((r) => {
@@ -304,7 +305,7 @@ function PersonBadge({
           onClick={onChange}
           className="text-sm text-slate-500 underline hover:text-slate-300"
         >
-          not you?
+          wrong driver?
         </button>
       )}
     </div>
@@ -419,7 +420,7 @@ function ChargeButton({
         onPointerLeave={() => charging && onUp()}
         className="w-full rounded-2xl bg-gold px-6 py-5 text-xl font-bold text-ink shadow-lg transition active:scale-95"
       >
-        {charging ? "Release to spin!" : "Hold to charge 🎯"}
+        {charging ? "Release to launch! 🚀" : "Hold to rev 🏎️"}
       </button>
     </div>
   );
@@ -438,16 +439,21 @@ function ResultCard({
         {result.isShirt ? "👕" : result.isNoPrize ? "😅" : "🎁"}
       </div>
       <p className="mt-2 text-slate-400">
-        {result.isNoPrize ? "Better luck next time!" : "You won"}
+        {result.isNoPrize ? "The wheel chose… nothing 😅" : "The wheel has spoken —"}
       </p>
       <p className="text-3xl font-extrabold">
         {result.isNoPrize ? "No prize" : result.prizeName}
       </p>
+      {result.isNoPrize && (
+        <p className="mt-1 text-sm text-slate-500">
+          Good news: the draft beer doesn&apos;t require winning. 🍺
+        </p>
+      )}
       <button
         onClick={onNext}
         className="mt-6 rounded-xl bg-brand px-6 py-3 font-semibold text-white hover:brightness-110"
       >
-        Next person →
+        Next driver →
       </button>
     </div>
   );
@@ -461,8 +467,11 @@ function EndScreen({
   const nameById = new Map(data.registrants.map((r) => [r.id, r.name]));
   return (
     <main className="mx-auto max-w-2xl px-6 py-16 text-center">
-      <h1 className="text-4xl font-bold">That&apos;s a wrap! 🎉</h1>
-      <p className="mt-2 text-slate-400">Everyone has spun. Here&apos;s the roll call:</p>
+      <h1 className="text-4xl font-bold">Checkered flag! 🏁</h1>
+      <p className="mt-2 text-slate-400">
+        Every driver&apos;s crossed the line. Final standings — now go refill
+        that beer. 🍺
+      </p>
       <ul className="mx-auto mt-8 max-w-md space-y-2 text-left">
         {data.results.map((r) => (
           <li

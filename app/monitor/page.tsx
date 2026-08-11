@@ -53,8 +53,10 @@ function PasswordGate({ onSuccess }: { onSuccess: () => void }) {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-panel p-8">
-        <h1 className="text-xl font-bold">Monitor · admin</h1>
-        <p className="mt-1 text-sm text-slate-400">Enter the shared password.</p>
+        <h1 className="text-xl font-bold">Mission Control ∿</h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Staff only. Password, please — the surprise stays a surprise.
+        </p>
         <input
           type="password"
           autoFocus
@@ -93,7 +95,7 @@ function Dashboard() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Monitor</h1>
+        <h1 className="text-2xl font-bold">Mission Control ∿</h1>
         <LockControl locked={locked} />
       </header>
 

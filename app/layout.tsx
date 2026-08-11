@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Farewell Raffle",
-  description: "Register, spin the wheel, win a prize — one last time.",
+  title: "Mbition Farewell Raffle ∿",
+  description:
+    "Draft beers, sandwiches, and a wheel that decides your fate. Friday the 14th, 18:00. Everything else is classified.",
 };
 
 export default function RootLayout({
