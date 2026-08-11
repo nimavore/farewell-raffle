@@ -97,6 +97,7 @@ export default function RegisterPage() {
           <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
             <span className="rounded-full bg-white/5 px-3 py-1">🗓️ Fri the 14th</span>
             <span className="rounded-full bg-white/5 px-3 py-1">🕕 18:00</span>
+            <span className="rounded-full bg-white/5 px-3 py-1">📍 1st floor · open space</span>
             <span className="rounded-full bg-white/5 px-3 py-1">🍺 draft beers</span>
             <span className="rounded-full bg-white/5 px-3 py-1">🥪 sandwiches</span>
           </div>
@@ -105,7 +106,8 @@ export default function RegisterPage() {
         {locked ? (
           <p className="mt-6 text-center text-slate-300">
             Grid&apos;s full — registration is closed. Follow the sound of the
-            draft tap on Friday at 18:00. <span aria-hidden>🍺</span>
+            draft tap to the 1st-floor open space, Friday at 18:00.{" "}
+            <span aria-hidden>🍺</span>
           </p>
         ) : status === "done" ? (
           <div className="mt-6 animate-pop text-center">
@@ -113,7 +115,8 @@ export default function RegisterPage() {
               You&apos;re on the grid! <span aria-hidden>∿</span>
             </p>
             <p className="mt-1 text-slate-300">
-              Friday the 14th, 18:00. Show up thirsty. <span aria-hidden>🍺</span>
+              Friday the 14th, 18:00 — 1st-floor open space. Show up thirsty.{" "}
+              <span aria-hidden>🍺</span>
             </p>
           </div>
         ) : (

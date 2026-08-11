@@ -15,7 +15,7 @@ export default function HomePage() {
           shifting into a new gear — the rest is classified.
         </p>
         <p className="mt-2 text-sm font-medium text-gold">
-          🗓️ Friday the 14th · 🕕 18:00 · 🍺 on tap
+          🗓️ Friday the 14th · 🕕 18:00 · 📍 1st-floor open space · 🍺 on tap
         </p>
       </div>
 

@@ -193,8 +193,17 @@ function EventControls({
     const res = await fetch(path, { method: "POST" });
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     setBusy(false);
-    if (!data.ok) {
-      setMsg((data.message as string) ?? "Action failed.");
+    if (!res.ok || !data.ok) {
+      setMsg(
+        (data.message as string) ??
+          (data.detail
+            ? `Error: ${data.detail}`
+            : data.reason === "unauthorized"
+              ? "Session expired — refresh the page and log in again."
+              : data.reason
+                ? `Failed: ${data.reason}`
+                : "Action failed.")
+      );
       return;
     }
     onOk?.(data);
