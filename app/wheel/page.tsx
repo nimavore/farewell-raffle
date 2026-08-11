@@ -18,7 +18,7 @@ const CHARGE_MS = 1600; // time to reach full power
 
 export default function WheelPage() {
   const data = useRaffleData();
-  const locked = data.eventState?.registration_locked ?? false;
+  const wheelOpen = data.eventState?.wheel_open ?? false;
 
   const [phase, setPhase] = useState<Phase>("pick");
   const [selectedId, setSelectedId] = useState("");
@@ -161,7 +161,7 @@ export default function WheelPage() {
   if (!data.ready) {
     return <Screen>Warming up the engine… ∿</Screen>;
   }
-  if (!locked) {
+  if (!wheelOpen) {
     return (
       <Screen>
         <p className="text-2xl font-semibold">Still in the pit lane… 🏁</p>

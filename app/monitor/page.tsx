@@ -80,6 +80,8 @@ function PasswordGate({ onSuccess }: { onSuccess: () => void }) {
 function Dashboard() {
   const data = useRaffleData();
   const locked = data.eventState?.registration_locked ?? false;
+  const wheelOpen = data.eventState?.wheel_open ?? false;
+  const hasSpins = data.results.length > 0;
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -96,7 +98,7 @@ function Dashboard() {
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Mission Control ∿</h1>
-        <LockControl locked={locked} />
+        <EventControls locked={locked} wheelOpen={wheelOpen} hasSpins={hasSpins} />
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -173,49 +175,104 @@ function Stat({
   );
 }
 
-function LockControl({ locked }: { locked: boolean }) {
+function EventControls({
+  locked,
+  wheelOpen,
+  hasSpins,
+}: {
+  locked: boolean;
+  wheelOpen: boolean;
+  hasSpins: boolean;
+}) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  async function toggle() {
+  async function call(path: string, onOk?: (data: Record<string, unknown>) => void) {
     setBusy(true);
     setMsg(null);
-    const path = locked ? "/api/admin/unlock" : "/api/admin/lock";
     const res = await fetch(path, { method: "POST" });
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     setBusy(false);
-
     if (!data.ok) {
-      setMsg(
-        data.message ??
-          (data.reason === "already_spun"
-            ? "Spins have started — reset to reopen."
-            : "Action failed.")
-      );
+      setMsg((data.message as string) ?? "Action failed.");
       return;
     }
-    if (!locked) {
-      setMsg(
-        `Locked. Pool: ${data.shirts} shirts + ${data.fillers} fillers + ${data.noprize} “No prize”.`
-      );
-    }
+    onOk?.(data);
   }
 
+  const lock = () =>
+    call("/api/admin/lock", (d) =>
+      setMsg(
+        `Locked. Pool: ${d.shirts} shirts + ${d.fillers} fillers + ${d.noprize} “No prize”.`
+      )
+    );
+  const unlock = () => call("/api/admin/unlock");
+  const openWheel = () =>
+    call("/api/admin/open-wheel", () => setMsg("Wheel is live — let them spin! 🎡"));
+  const closeWheel = () => call("/api/admin/close-wheel");
+
+  const step = wheelOpen ? 2 : locked ? 1 : 0;
+
   return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        onClick={toggle}
-        disabled={busy}
-        className={
-          "rounded-xl px-4 py-2 font-semibold transition disabled:opacity-60 " +
-          (locked
-            ? "bg-white/10 hover:bg-white/20"
-            : "bg-emerald-500 text-white hover:brightness-110")
-        }
-      >
-        {busy ? "…" : locked ? "🔒 Locked — Unlock" : "🔓 Lock Registration"}
-      </button>
-      {msg && <p className="max-w-xs text-right text-xs text-slate-400">{msg}</p>}
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex items-center gap-2">
+        {!locked && (
+          <button
+            onClick={lock}
+            disabled={busy}
+            className="rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
+          >
+            {busy ? "…" : "🔒 1 · Lock Registration"}
+          </button>
+        )}
+
+        {locked && !wheelOpen && (
+          <>
+            <button
+              onClick={unlock}
+              disabled={busy}
+              className="rounded-xl bg-white/10 px-3 py-2 text-sm transition hover:bg-white/20 disabled:opacity-60"
+            >
+              Unlock
+            </button>
+            <button
+              onClick={openWheel}
+              disabled={busy}
+              className="rounded-xl bg-brand px-4 py-2 font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
+            >
+              {busy ? "…" : "🎡 2 · Enable Wheel"}
+            </button>
+          </>
+        )}
+
+        {wheelOpen && (
+          <>
+            <span className="rounded-xl bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-300">
+              🎡 Wheel is LIVE
+            </span>
+            {!hasSpins && (
+              <button
+                onClick={closeWheel}
+                disabled={busy}
+                className="rounded-xl bg-white/10 px-3 py-2 text-sm transition hover:bg-white/20 disabled:opacity-60"
+              >
+                Disable
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <p className="max-w-xs text-right text-xs text-slate-400">
+        {msg ??
+          (step === 0
+            ? "Step 1: lock registration to freeze the list and build the pool."
+            : step === 1
+              ? "Locked & pool built. Step 2: enable the wheel to start the draw."
+              : hasSpins
+                ? "Draw in progress. Reset (below) to undo everything."
+                : "Wheel is live. Disable stays available until the first spin lands.")}
+      </p>
     </div>
   );
 }

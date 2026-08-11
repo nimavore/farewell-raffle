@@ -37,6 +37,7 @@ export type SpinResult = {
 export type EventState = {
   id: number;
   registration_locked: boolean;
+  wheel_open: boolean;
 };
 
 // jsonb payloads returned by the RPCs
@@ -66,7 +67,7 @@ export type SpinRpcResult =
   | {
       ok: false;
       reason:
-        | "not_locked"
+        | "wheel_closed"
         | "unknown_registrant"
         | "already_spun"
         | "pool_empty";

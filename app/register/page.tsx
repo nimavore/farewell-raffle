@@ -119,7 +119,7 @@ export default function RegisterPage() {
         ) : (
           <form onSubmit={submit} className="mt-6 space-y-4">
             <label className="block">
-              <span className="text-sm text-slate-400">Your name</span>
+              <span className="text-sm text-slate-400">Your name or brat-name</span>
               <input
                 autoFocus
                 value={name}

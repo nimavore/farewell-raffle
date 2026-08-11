@@ -60,6 +60,12 @@ create table if not exists event_state (
   registration_locked  boolean not null default false
 );
 
+-- Two-step go-live. Step 1 `registration_locked` freezes the list and builds
+-- the pool; step 2 `wheel_open` actually enables spinning. (add-if-missing so
+-- re-running this migration upgrades an existing table.)
+alter table event_state
+  add column if not exists wheel_open boolean not null default false;
+
 -- ---------------------------------------------------------------------------
 -- Seed: exactly one event_state row + the guaranteed T-Shirt x6 config row.
 -- ---------------------------------------------------------------------------
@@ -217,12 +223,56 @@ security definer
 set search_path = public
 as $$
 begin
+  if (select wheel_open from event_state where id = 1) then
+    return jsonb_build_object('ok', false, 'reason', 'wheel_open',
+      'message', 'Disable the wheel before reopening registration.');
+  end if;
   if exists (select 1 from spin_results) then
     return jsonb_build_object('ok', false, 'reason', 'already_spun',
       'message', 'Cannot unlock — spins have already happened. Reset instead.');
   end if;
   delete from prize_pool where true;
   update event_state set registration_locked = false where id = 1;
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- RPC: open_wheel() / close_wheel() — admin. Step 2 of go-live: flip the wheel
+-- on (spinning allowed) or back off (only before any spins).
+-- ---------------------------------------------------------------------------
+create or replace function open_wheel()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not (select registration_locked from event_state where id = 1) then
+    return jsonb_build_object('ok', false, 'reason', 'not_locked',
+      'message', 'Lock registration first.');
+  end if;
+  if not exists (select 1 from prize_pool) then
+    return jsonb_build_object('ok', false, 'reason', 'no_pool',
+      'message', 'No prize pool — unlock and re-lock to rebuild it.');
+  end if;
+  update event_state set wheel_open = true where id = 1;
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+create or replace function close_wheel()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if exists (select 1 from spin_results) then
+    return jsonb_build_object('ok', false, 'reason', 'already_spun',
+      'message', 'Spins have started — reset to undo.');
+  end if;
+  update event_state set wheel_open = false where id = 1;
   return jsonb_build_object('ok', true);
 end;
 $$;
@@ -240,14 +290,14 @@ security definer
 set search_path = public
 as $$
 declare
-  v_locked  boolean;
+  v_open    boolean;
   v_spun    boolean;
   v_slot    prize_pool%rowtype;
   v_seq     int;
 begin
-  select registration_locked into v_locked from event_state where id = 1;
-  if not v_locked then
-    return jsonb_build_object('ok', false, 'reason', 'not_locked');
+  select wheel_open into v_open from event_state where id = 1;
+  if not v_open then
+    return jsonb_build_object('ok', false, 'reason', 'wheel_closed');
   end if;
 
   -- Lock the registrant row so concurrent/duplicate clicks serialize here.
@@ -315,7 +365,7 @@ begin
   insert into prize_config (name, quantity, is_shirt, sort)
   values ('T-Shirt', 6, true, 0);
 
-  update event_state set registration_locked = false where id = 1;
+  update event_state set registration_locked = false, wheel_open = false where id = 1;
 
   return jsonb_build_object('ok', true);
 end;
@@ -329,6 +379,8 @@ revoke all on function register(text)          from anon, authenticated;
 revoke all on function spin(uuid)              from anon, authenticated;
 revoke all on function lock_registration()     from anon, authenticated;
 revoke all on function unlock_registration()   from anon, authenticated;
+revoke all on function open_wheel()            from anon, authenticated;
+revoke all on function close_wheel()           from anon, authenticated;
 revoke all on function reset_event()           from anon, authenticated;
 
 grant execute on function register(text) to anon, authenticated;
