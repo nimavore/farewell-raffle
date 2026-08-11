@@ -123,7 +123,9 @@ export default function WheelPage() {
       return;
     }
 
-    const seg = layout.find((s) => s.prizeName === res!.prizeName) ?? layout[0];
+    // Land on a random slice matching the won prize (names repeat across slices).
+    const matches = layout.filter((s) => s.prizeName === res!.prizeName);
+    const seg = matches[Math.floor(Math.random() * matches.length)] ?? layout[0];
     spinDuration.current = 3.2 + p * 3.5;
     const next = landingRotation(rotationRef.current, seg, p);
     rotationRef.current = next;
@@ -340,26 +342,42 @@ function Wheel({
           onTransitionEnd={onTransitionEnd}
         >
           {segments.map((s) => {
-            const lp = labelPos(s.mid);
-            const short =
-              s.count > 1 ? `${s.prizeName} ×${s.count}` : s.prizeName;
+            // A lone remaining prize fills the whole wheel. An SVG arc from 0°
+            // to 360° is degenerate (start === end point) and renders nothing,
+            // so draw a full circle instead.
+            const full = s.end - s.start >= 359.999;
+            const lp = full ? { x: 50, y: 32 } : labelPos(s.mid);
+            const short = s.prizeName;
             return (
-              <g key={s.prizeName}>
-                <path
-                  d={segmentPath(s.start, s.end)}
-                  fill={s.color}
-                  stroke="#0b0e13"
-                  strokeWidth={0.5}
-                />
+              <g key={s.key}>
+                {full ? (
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="46"
+                    fill={s.color}
+                    stroke="#0b0e13"
+                    strokeWidth={0.5}
+                  />
+                ) : (
+                  <path
+                    d={segmentPath(s.start, s.end)}
+                    fill={s.color}
+                    stroke="#0b0e13"
+                    strokeWidth={0.5}
+                  />
+                )}
                 <text
                   x={lp.x}
                   y={lp.y}
                   fill="#0b0e13"
-                  fontSize={segments.length > 8 ? 2.6 : 3.4}
+                  fontSize={
+                    segments.length > 16 ? 2.0 : segments.length > 8 ? 2.5 : 3.4
+                  }
                   fontWeight="700"
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  transform={`rotate(${s.mid}, ${lp.x}, ${lp.y})`}
+                  transform={full ? undefined : `rotate(${s.mid}, ${lp.x}, ${lp.y})`}
                 >
                   {short.length > 14 ? short.slice(0, 13) + "…" : short}
                 </text>

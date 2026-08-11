@@ -175,8 +175,8 @@ begin
 
   v_noprize := v_n - 6 - v_fillers;
 
-  -- (Re)build the pool from scratch.
-  delete from prize_pool;
+  -- (Re)build the pool from scratch. (WHERE true satisfies safe-update mode.)
+  delete from prize_pool where true;
 
   -- 6 shirts
   insert into prize_pool (prize_name, is_shirt, is_noprize)
@@ -221,7 +221,7 @@ begin
     return jsonb_build_object('ok', false, 'reason', 'already_spun',
       'message', 'Cannot unlock — spins have already happened. Reset instead.');
   end if;
-  delete from prize_pool;
+  delete from prize_pool where true;
   update event_state set registration_locked = false where id = 1;
   return jsonb_build_object('ok', true);
 end;
@@ -311,7 +311,7 @@ begin
   perform setval('reg_seq', 1, false);
   perform setval('spin_seq', 1, false);
 
-  delete from prize_config;
+  delete from prize_config where true;
   insert into prize_config (name, quantity, is_shirt, sort)
   values ('T-Shirt', 6, true, 0);
 

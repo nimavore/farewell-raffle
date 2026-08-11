@@ -1,6 +1,7 @@
 import type { RemainingPrize } from "./types";
 
 export type WheelSegment = RemainingPrize & {
+  key: string; // unique per slice (prize names repeat across slices)
   start: number; // degrees, 0 = top, clockwise
   end: number;
   mid: number;
@@ -18,26 +19,52 @@ const FILLER_COLORS = [
   "#fca5a5",
 ];
 
-// Build proportional wheel segments from the remaining prize counts. One
-// segment per prize type, sized by how many of that prize are still unclaimed.
+// Blend a hex color toward white by `amt` (0..1) so adjacent same-prize slices
+// are visually distinct.
+function lighten(hex: string, amt: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const mix = (c: number) => Math.round(c + (255 - c) * amt);
+  return `#${((mix(r) << 16) | (mix(g) << 8) | mix(b)).toString(16).padStart(6, "0")}`;
+}
+
+// Build the wheel as one equal-sized slice per remaining prize slot, so 6
+// shirts show as 6 shirt slices, etc. The wheel shrinks slot-by-slot as prizes
+// are claimed. Adjacent slices of the same prize alternate shade to stay
+// readable.
 export function buildSegments(prizes: RemainingPrize[]): WheelSegment[] {
   const totalCount = prizes.reduce((s, p) => s + p.count, 0);
   if (totalCount === 0) return [];
 
+  const slice = 360 / totalCount;
+  const segs: WheelSegment[] = [];
   let cursor = 0;
   let fillerIdx = 0;
-  return prizes.map((p) => {
-    const sweep = (p.count / totalCount) * 360;
-    const start = cursor;
-    const end = cursor + sweep;
-    cursor = end;
-    const color = p.isShirt
+
+  for (const p of prizes) {
+    const base = p.isShirt
       ? "#7c5cff"
       : p.isNoPrize
         ? "#4b5563"
         : FILLER_COLORS[fillerIdx++ % FILLER_COLORS.length];
-    return { ...p, start, end, mid: (start + end) / 2, color };
-  });
+
+    for (let i = 0; i < p.count; i++) {
+      const start = cursor;
+      const end = cursor + slice;
+      cursor = end;
+      segs.push({
+        ...p,
+        key: `${p.prizeName}#${i}`,
+        start,
+        end,
+        mid: (start + end) / 2,
+        color: i % 2 === 0 ? base : lighten(base, 0.16),
+      });
+    }
+  }
+  return segs;
 }
 
 function polar(angleDeg: number, r: number, cx = 50, cy = 50) {
